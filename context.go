@@ -1,6 +1,9 @@
 package rogerr
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 type ctxKey int
 
@@ -20,7 +23,7 @@ func WithMetadata(ctx context.Context, data map[string]interface{}) context.Cont
 	if ctx == nil {
 		return nil
 	}
-	md := Metadata(ctx)
+	md := getOrInitializeMetadata(ctx)
 	for k, v := range data {
 		md[k] = v
 	}
@@ -28,8 +31,18 @@ func WithMetadata(ctx context.Context, data map[string]interface{}) context.Cont
 }
 
 // Metadata pulls out all the metadata known by this package as a
-// map[key]value from the given context.
-func Metadata(ctx context.Context) map[string]interface{} {
+// map[key]value from the given error.
+func Metadata(err error) map[string]interface{} {
+	rErr := &Error{}
+
+	// Yes, that's a double pointer. The error type is a struct pointer, and
+	// errors.As requires a pointer to a type that implements the error
+	// interface, which is *Error, hence passing **Error here.
+	errors.As(err, &rErr)
+	return getOrInitializeMetadata(rErr.ctx)
+}
+
+func getOrInitializeMetadata(ctx context.Context) map[string]interface{} {
 	if ctx == nil {
 		return nil
 	}
