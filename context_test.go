@@ -100,7 +100,8 @@ func TestMetadata(t *testing.T) {
 			ctx = rogerr.WithMetadatum(ctx, key, value)
 			thirdWrap := rogerr.Wrap(ctx, secondWrap, "third wrap args")
 			ctx = rogerr.WithMetadatum(ctx, key, value+1) // should overwrite lowest context
-			return rogerr.Wrap(ctx, thirdWrap, "fourth wrap args")
+			fourthWrap := rogerr.Wrap(ctx, thirdWrap, "fourth wrap args")
+			return fmt.Errorf("ooi: %w", fourthWrap)
 		}
 
 		var err error = complicatedErrorFlow() // long-form variable declaration to ensure interface adherence via the compiler
@@ -114,6 +115,11 @@ func TestMetadata(t *testing.T) {
 			if md[k] != v {
 				t.Errorf("expected extracted metadata at key '%s' to have value <%v> but was <%v>", k, v, md[k])
 			}
+		}
+
+		exp := "ooi: fourth wrap args: third wrap args: second wrap args: wrap with fmt: first wrap args: some low level err"
+		if got := err.Error(); got != exp {
+			t.Errorf("expected error string\n%s\nbut got\n%s\n", exp, got)
 		}
 	})
 }
