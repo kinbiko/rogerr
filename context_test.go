@@ -2,6 +2,7 @@ package rogerr_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/kinbiko/rogerr"
@@ -11,6 +12,7 @@ func TestMetadata(t *testing.T) {
 	var (
 		key      = "some key"
 		value    = "some value"
+		err      = errors.New("ooi")
 		metadata = map[string]interface{}{"some keys": 2134, "and": "values"}
 	)
 
@@ -20,7 +22,8 @@ func TestMetadata(t *testing.T) {
 			if ctx != nil {
 				t.Fatalf("expected nil ctx returned but got %+v", ctx)
 			}
-			md := rogerr.Metadata(ctx)
+			err := rogerr.Wrap(ctx, err)
+			md := rogerr.Metadata(err)
 			if md != nil {
 				t.Fatalf("expected nil metadata returned from nil ctx but got %+v", md)
 			}
@@ -31,7 +34,8 @@ func TestMetadata(t *testing.T) {
 			if ctx != nil {
 				t.Fatalf("expected nil ctx returned but got %+v", ctx)
 			}
-			md := rogerr.Metadata(ctx)
+			err := rogerr.Wrap(ctx, err)
+			md := rogerr.Metadata(err)
 			if md != nil {
 				t.Fatalf("expected nil metadata returned from nil ctx but got %+v", md)
 			}
@@ -42,7 +46,8 @@ func TestMetadata(t *testing.T) {
 		t.Run("WithMetadata", func(t *testing.T) {
 			ctx := context.Background()
 			ctx = rogerr.WithMetadata(ctx, metadata)
-			md := rogerr.Metadata(ctx)
+			err := rogerr.Wrap(ctx, err)
+			md := rogerr.Metadata(err)
 			for k, v := range md {
 				if got := metadata[k]; got != v {
 					t.Errorf("expected to find extracted value %v under key %s in stored metadata, but got %v", v, k, got)
@@ -58,7 +63,8 @@ func TestMetadata(t *testing.T) {
 		t.Run("WithMetadatum", func(t *testing.T) {
 			ctx := context.Background()
 			ctx = rogerr.WithMetadatum(ctx, key, value)
-			md := rogerr.Metadata(ctx)
+			err := rogerr.Wrap(ctx, err)
+			md := rogerr.Metadata(err)
 
 			if got := len(md); got != 1 {
 				t.Errorf("length of extracted metadata is different (%d) than the expected 1", got)
