@@ -31,8 +31,7 @@ func WithMetadata(ctx context.Context, data map[string]interface{}) context.Cont
 }
 
 // Metadata pulls out all the metadata known by this package as a
-// map[key]value from the given error. Extracts the metadata of the
-// *rogerr.Error that was wrapped closest to the root error.
+// map[key]value from the given error.
 func Metadata(err error) map[string]interface{} {
 	rErr := &Error{}
 
