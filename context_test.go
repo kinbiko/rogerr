@@ -16,7 +16,7 @@ func TestMetadata(t *testing.T) {
 
 	t.Run("nil ctx should return nil without panicking even if used later", func(t *testing.T) {
 		t.Run("WithMetadatum", func(t *testing.T) {
-			ctx := rogerr.WithMetadatum(nil, key, value)
+			ctx := rogerr.WithMetadatum(nil, key, value) //nolint:staticcheck // Testing that we don't do a dumb when users do a dumb
 			if ctx != nil {
 				t.Fatalf("expected nil ctx returned but got %+v", ctx)
 			}
@@ -27,7 +27,7 @@ func TestMetadata(t *testing.T) {
 		})
 
 		t.Run("WithMetadata", func(t *testing.T) {
-			ctx := rogerr.WithMetadata(nil, metadata)
+			ctx := rogerr.WithMetadata(nil, metadata) //nolint:staticcheck // Testing that we don't do a dumb when users do a dumb
 			if ctx != nil {
 				t.Fatalf("expected nil ctx returned but got %+v", ctx)
 			}
