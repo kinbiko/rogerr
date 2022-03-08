@@ -1,3 +1,3 @@
-module github.com/kinbiko/go-template
+module github.com/kinbiko/rogerr
 
 go 1.15
