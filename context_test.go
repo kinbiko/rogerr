@@ -84,8 +84,8 @@ func TestMetadata(t *testing.T) {
 	t.Run("integration test", func(t *testing.T) {
 		/*
 			This test case reflects the real world a bit more, in particular:
-			- The rogerr.Error type might be wrapped multiple kinds
-				- by another rogerr.Error
+			- The rogerr.rError type might be wrapped multiple kinds
+				- by another rogerr.rError
 					- simple wrap-and-return
 					- the programmer may choose to add context data *after* they know there's an error, and then wrap the error with a different context.
 				- by other errors like fmt.Errorf or errors.New
@@ -104,7 +104,7 @@ func TestMetadata(t *testing.T) {
 			return fmt.Errorf("ooi: %w", fourthWrap)
 		}
 
-		var err error = complicatedErrorFlow() // long-form variable declaration to ensure interface adherence via the compiler
+		err := complicatedErrorFlow()
 
 		md := rogerr.Metadata(err)
 		if got := len(md); got != len(metadata)+1 /* metadatum adds one */ {
