@@ -33,7 +33,7 @@ func WithMetadata(ctx context.Context, data map[string]interface{}) context.Cont
 // Metadata pulls out all the metadata known by this package as a
 // map[key]value from the given error.
 func Metadata(err error) map[string]interface{} {
-	rErr := &Error{}
+	rErr := &rError{}
 
 	// Yes, that's a double pointer. The error type is a struct pointer, and
 	// errors.As requires a pointer to a type that implements the error

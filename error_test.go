@@ -80,7 +80,7 @@ func TestWrap(t *testing.T) {
 			if tc.msg != "" || tc.args != nil {
 				tc.args = append([]interface{}{tc.msg}, tc.args...)
 			}
-			wrapped := Wrap(tc.ctx, tc.err, tc.args...)
+			wrapped := Wrap(tc.ctx, tc.err, tc.args...).(*rError)
 			if wrapped == nil {
 				t.Fatalf("got nil err")
 			}
