@@ -1,4 +1,4 @@
-/* Package rogerr is a zero-dependency error handling support package.
+/*Package rogerr is a zero-dependency error handling support package.
 
 When creating errors, **do not include goroutine-specific or request-specific information as part of the error message itself**.
 Error messages with these specific bits of information often break filtering/grouping algorithms, e.g. as used by error reporting tools like Sentry/Rollbar/etc. (If you use Bugsnag, I recommend [kinbiko/bugsnag](https://github.com/kinbiko/bugsnag) for an **even better** experience than this package).
