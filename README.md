@@ -23,3 +23,5 @@ At a high level:
 1. When you come across an error, use `err = rogerr.Wrap(ctx, err, msg)` to attach the metadata accumulated so far to the wrapped error.
 1. Return the error as you would normally, and at the time of logging/reporting, extract the metadata with `md := rogerr.Metadata(err)`.
 1. Record the _structured_ metadata alongside the error message.
+
+For more details, see [the official docs](https://pkg.go.dev/github.com/kinbiko/rogerr).
