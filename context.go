@@ -49,7 +49,7 @@ func getOrInitializeMetadata(ctx context.Context) map[string]interface{} {
 
 	m := map[string]interface{}{}
 	if val := ctx.Value(ctxDataKey); val != nil {
-		m = val.(map[string]interface{}) // this package owns the ctx key type so this cast is safe.
+		m = val.(map[string]interface{}) //nolint:errcheck // this package owns the ctx key type so this cast is safe.
 	}
 	return m
 }
