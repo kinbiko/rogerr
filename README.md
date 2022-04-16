@@ -7,7 +7,7 @@
 [![Go Documentation](http://img.shields.io/badge/godoc-documentation-blue.svg?style=flat)](https://pkg.go.dev/github.com/kinbiko/rogerr?tab=doc)
 [![License](https://img.shields.io/github/license/kinbiko/rogerr.svg?style=flat)](https://github.com/kinbiko/rogerr/blob/master/LICENSE)
 
-Zero-dependency error handling support package for Go.
+Consistent and greppable errors makes your logger and error reporting tools happy. This zero-dependency error handling support package for Go helps you achieve just that.
 
 ## Usage
 
