@@ -9,6 +9,8 @@
 
 Consistent and greppable errors makes your logger and error reporting tools happy. This zero-dependency error handling support package for Go helps you achieve just that.
 
+[Blog post explaining the problem and the solution in detail](https://kinbiko.com/posts/2022-07-30-error-messages-should-be-boring/).
+
 ## Usage
 
 When creating errors, **do not include goroutine-specific or request-specific information as part of the error message itself**.
