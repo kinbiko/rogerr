@@ -32,7 +32,7 @@ type Frame struct {
 
 ```go
 type ErrorHandler struct {
-    skipStacktrace bool
+    stacktrace bool
     // Future configuration options can be added here
 }
 
@@ -46,7 +46,7 @@ type rError struct {
     err        error
     ctx        context.Context
     msg        string
-    stacktrace []Frame // New field for stacktrace (nil when skipStacktrace is true)
+    stacktrace []Frame // New field for stacktrace (nil when stacktrace is false)
 }
 ```
 
@@ -55,9 +55,9 @@ type rError struct {
 #### ErrorHandler Construction (Options Pattern)
 
 ```go
-func WithStacktrace(b bool) Option {
+func WithStacktrace(enabled bool) Option {
     return func(h *ErrorHandler) {
-        h.stacktrace = b
+        h.stacktrace = enabled
     }
 }
 
@@ -185,7 +185,7 @@ func makeModulePath() string {
 - Use `runtime.Callers()` to capture program counters starting from the caller of `Wrap`
 - Use `runtime.CallersFrames()` to convert PCs to frame information
 - Filter out rogerr internal frames by checking package paths
-- Skip capture entirely when `skipStacktrace` is true for performance
+- Skip capture entirely when `stacktrace` is false for performance
 
 #### 2. Application vs Dependency Detection
 
@@ -203,13 +203,13 @@ func makeModulePath() string {
 
 Exclude frames from:
 
-- The rogerr package itself (`github.com/kinbiko/rogerr`)
+- The rogerr main package itself (using `strings.HasPrefix(frame.Function, "github.com/kinbiko/rogerr.")` to avoid filtering internal modules)
 - Runtime package internals that aren't useful for debugging
 - Any frame before the actual caller of `ErrorHandler.Wrap`
 
 #### 4. Performance Considerations
 
-- When `skipStacktrace` is true, avoid any stacktrace-related work entirely
+- When `stacktrace` is false, avoid any stacktrace-related work entirely
 - Limit stacktrace depth to prevent excessive memory usage (e.g., 64 frames max)
 - Store frames immediately rather than lazy evaluation to avoid GC pressure
 
@@ -273,7 +273,7 @@ metadata := rogerr.Metadata(err)
 1. Define `Frame` struct
 2. Create `ErrorHandler` type with options pattern
 3. Implement `NewErrorHandler` constructor
-4. Add `skipStacktrace` option
+4. Add `WithStacktrace` option function
 
 ### Phase 2: Stacktrace Capture
 
@@ -302,6 +302,28 @@ metadata := rogerr.Metadata(err)
 3. Performance benchmarks comparing with/without stacktrace
 4. Update documentation and examples
 
+### Phase 6: Integration Testing (Critical - Reveals Implementation Issues)
+
+**Important**: Integration testing revealed critical bugs that were not caught by unit tests alone. This phase should be implemented immediately after Phase 2 to catch frame filtering and InApp detection issues early.
+
+1. Create realistic integration test environment with separate modules
+2. Build mylib module as external dependency
+3. Build myapp module with nested package structure (cmd/, pkg/service/, pkg/handler/)
+4. Implement comprehensive integration test validating:
+   - Correct InApp classification across module boundaries
+   - Various function types (methods, package functions, anonymous functions)
+   - Specific file paths and line numbers
+   - Frame filtering (exclude rogerr internals, include application code)
+5. **Expected Issues to Surface**:
+   - Frame filtering too broad (filtering internal modules incorrectly)
+   - InApp detection failing for main.\* functions
+   - Module boundary detection problems
+6. Fix frame filtering logic to properly distinguish main rogerr package from internal modules
+7. Update isInApp logic to handle main.\* functions correctly
+8. Ensure integration tests run in CI via make test
+
+**Lesson Learned**: Unit tests alone are insufficient for validating stacktrace behavior across realistic module boundaries. Integration testing is essential for this feature.
+
 ## Backward Compatibility
 
 This design maintains complete backward compatibility:
@@ -315,20 +337,71 @@ The only change is deprecation warnings on existing functions, encouraging migra
 
 ## Performance Impact
 
-- **With stacktrace disabled**: Zero performance impact through `skipStacktrace` option
+- **With stacktrace disabled**: Zero performance impact through `WithStacktrace(false)` option
 - **With stacktrace enabled**: Minimal overhead only when errors are actually wrapped
 - **Memory usage**: Additional memory only for Frame slices when stacktraces are captured
 - **Backward compatibility**: Existing code gets stacktrace functionality automatically but can opt out if needed
 
+## Implementation Lessons Learned
+
+### Critical Frame Filtering Issues
+
+During implementation, we discovered that the initial frame filtering approach was too broad:
+
+**Problem**: Using `strings.Contains(frame.Function, "github.com/kinbiko/rogerr")` incorrectly filtered out internal test modules like `github.com/kinbiko/rogerr/internal/myapp` and `github.com/kinbiko/rogerr/internal/mylib`.
+
+**Solution**: Changed to `strings.HasPrefix(frame.Function, "github.com/kinbiko/rogerr.")` to only filter the main rogerr package, preserving internal modules that should be treated as application or dependency code.
+
+### InApp Detection for Main Package Functions
+
+**Problem**: Functions in the main package (e.g., `main.run`, `main.main`) were not being correctly classified as InApp when running as standalone binaries.
+
+**Root Cause**: The module path from `debug.ReadBuildInfo()` returns the full module path, but main package functions are prefixed with just `main.`, causing the prefix check to fail.
+
+**Solution**: Added special handling for `main.*` functions:
+
+```go
+// Handle case where the binary is built from a module and function names
+// start with "main." - check if the module path contains the current module
+if strings.HasPrefix(function, "main.") {
+    return true
+}
+```
+
+### Integration Test Environment Requirements
+
+**Discovered Need**: Simple unit tests were insufficient to validate real-world stacktrace behavior across module boundaries.
+
+**Implementation**: Created comprehensive integration test with:
+
+- Separate Go modules (`mylib` as dependency, `myapp` as application)
+- Realistic application structure with nested packages
+- Various function types (methods, package functions, anonymous functions)
+- Explicit validation of file paths, line numbers, and InApp classification
+
+### Make Target Integration
+
+**Issue**: Integration tests in separate modules weren't automatically run by CI.
+
+**Solution**: Updated Makefile to include integration tests in the main `test` target:
+
+```makefile
+test: ## Run tests with race detection and coverage
+	go test -race -count=1 -coverprofile=profile.cov -covermode=atomic ./...
+	cd internal/myapp && go test -count=1 ./...
+```
+
 ## Documentation Updates Required
 
 ### Package Documentation (doc.go)
+
 - Update package-level documentation to introduce the new `ErrorHandler` API
 - Add examples showing both old and new usage patterns
 - Document the `WithStacktrace` option and its default behavior
 - Include migration guidance from package-level functions to `ErrorHandler`
 
 ### Function Documentation
+
 - Add comprehensive documentation for `ErrorHandler.Stacktrace()` method:
   - Explain what stacktraces are captured (call site of `Wrap`)
   - Document the `Frame` struct fields and their meanings
@@ -339,12 +412,13 @@ The only change is deprecation warnings on existing functions, encouraging migra
 ### Structured Logging Integration
 
 #### log/slog Integration
+
 Document how to use rogerr with Go's structured logging:
 
 ```go
 // Basic metadata logging
 metadata := handler.Metadata(err)
-slog.Error("request failed", 
+slog.Error("request failed",
     "error", err.Error(),
     "metadata", metadata)
 
@@ -359,6 +433,7 @@ if len(frames) > 0 {
 ```
 
 #### Datadog-Compatible Logging
+
 For logging engines like Datadog that can index stacktrace data:
 
 ```go
@@ -389,6 +464,7 @@ slog.Error("application error",
 ```
 
 #### General Structured Logging Best Practices
+
 - **Consistent field naming**: Use standardized field names (`error.message`, `error.stack`, `error.metadata`)
 - **Searchable metadata**: Ensure metadata keys are consistent across the application for better querying
 - **Stack filtering**: Log full stacktraces in development, consider filtering in production to reduce noise
@@ -399,13 +475,13 @@ slog.Error("application error",
 func logError(ctx context.Context, handler *rogerr.ErrorHandler, err error, msg string) {
     metadata := handler.Metadata(err)
     frames := handler.Stacktrace(err)
-    
+
     logEntry := slog.With(
         slog.String("error.message", err.Error()),
         slog.String("error.description", msg),
         slog.Any("error.metadata", metadata),
     )
-    
+
     // Include stacktrace for application errors
     if len(frames) > 0 {
         // Filter to only application frames for cleaner logs
@@ -419,8 +495,8 @@ func logError(ctx context.Context, handler *rogerr.ErrorHandler, err error, msg 
             logEntry = logEntry.With(slog.Any("error.stack", appFrames))
         }
     }
-    
+
     logEntry.ErrorContext(ctx, "operation failed")
 }
-```
 
+```
