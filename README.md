@@ -27,3 +27,14 @@ At a high level:
 1. Record the _structured_ metadata alongside the error message.
 
 For more details, see [the official docs](https://pkg.go.dev/github.com/kinbiko/rogerr).
+
+### Build Recommendations
+
+For cleaner stacktrace file paths, build with the `-trimpath` flag:
+
+```bash
+go build -trimpath ./cmd/myapp
+```
+
+This removes local build path prefixes, showing module-relative paths instead of absolute machine-specific paths.
+Not needed if stacktraces are disabled with `WithStacktrace(false)`, e.g. for performance reasons.
