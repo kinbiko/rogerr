@@ -8,6 +8,8 @@ import (
 )
 
 func ExampleWrap() {
+	handler := rogerr.NewErrorHandler()
+
 	someFuncWithAProblem := func(_ context.Context) error {
 		return fmt.Errorf("some low level err")
 	}
@@ -18,7 +20,7 @@ func ExampleWrap() {
 
 		err := someFuncWithAProblem(ctx)
 		if err != nil {
-			return rogerr.Wrap(ctx, err, "wrap args")
+			return handler.Wrap(ctx, err, "wrap args")
 		}
 		return nil
 	}

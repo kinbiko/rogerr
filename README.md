@@ -7,34 +7,36 @@
 [![Go Documentation](http://img.shields.io/badge/godoc-documentation-blue.svg?style=flat)](https://pkg.go.dev/github.com/kinbiko/rogerr?tab=doc)
 [![License](https://img.shields.io/github/license/kinbiko/rogerr.svg?style=flat)](https://github.com/kinbiko/rogerr/blob/master/LICENSE)
 
-Consistent and greppable errors makes your logger and error reporting tools happy. This zero-dependency error handling support package for Go helps you achieve just that.
+A Go package for error handling with structured metadata. Zero dependencies.
 
-[Blog post explaining the problem and the solution in detail](https://kinbiko.com/posts/2022-07-30-error-messages-should-be-boring/).
+[Blog post with detailed explanation](https://kinbiko.com/posts/2022-07-30-error-messages-should-be-boring/).
+
+## Problem
+
+Error messages that include unique data (user IDs, timestamps, etc.) break error grouping in monitoring tools like Sentry and Rollbar.
+
+## Solution
+
+Store unique data as structured metadata separate from the error message.
+This package attaches metadata to Go's `context.Context` and preserves it when wrapping errors.
 
 ## Usage
 
-When creating errors, **do not include goroutine-specific or request-specific information as part of the error message itself**.
-Error messages with these specific bits of information often break filtering/grouping algorithms, e.g. as used by error reporting tools like Sentry/Rollbar/etc. (If you use Bugsnag, I recommend [kinbiko/bugsnag](https://github.com/kinbiko/bugsnag) for an **even better** experience than this package).
+1. Create an ErrorHandler: `handler := rogerr.NewErrorHandler()`
+2. Add metadata to context: `ctx = rogerr.WithMetadatum(ctx, "userID", 123)`
+3. Wrap errors with metadata: `err = handler.Wrap(ctx, err, "operation failed")`
+4. Extract metadata for logging: `metadata := rogerr.Metadata(err)`
 
-Instead this information should be treated as structured data, akin to structured logging solutions like Logrus and Zap.
-In Go, it's conventional to attach this kind of request specific 'diagnostic' metadata to a `context.Context` type, and that's what this package enables too.
+### Build Options
 
-At a high level:
-
-1. Attach metadata to your context with `rogerr.WithMetadata` or `rogerr.WithMetadatum`.
-1. When you come across an error, use `err = rogerr.Wrap(ctx, err, msg)` to attach the metadata accumulated so far to the wrapped error.
-1. Return the error as you would normally, and at the time of logging/reporting, extract the metadata with `md := rogerr.Metadata(err)`.
-1. Record the _structured_ metadata alongside the error message.
-
-For more details, see [the official docs](https://pkg.go.dev/github.com/kinbiko/rogerr).
-
-### Build Recommendations
-
-For cleaner stacktrace file paths, build with the `-trimpath` flag:
+For cleaner stacktraces, use the `-trimpath` flag:
 
 ```bash
 go build -trimpath ./cmd/myapp
 ```
 
-This removes local build path prefixes, showing module-relative paths instead of absolute machine-specific paths.
-Not needed if stacktraces are disabled with `WithStacktrace(false)`, e.g. for performance reasons.
+This shows module-relative paths instead of absolute paths.
+Skip this if you disable stacktraces with `rogerr.WithStacktrace(false)`.
+
+[Full documentation](https://pkg.go.dev/github.com/kinbiko/rogerr)
+
