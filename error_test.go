@@ -93,3 +93,26 @@ func TestWrap(t *testing.T) {
 		})
 	}
 }
+
+func TestNewErrorHandler(t *testing.T) {
+	t.Run("default configuration", func(t *testing.T) {
+		handler := NewErrorHandler()
+		if !handler.stacktrace {
+			t.Error("expected stacktrace to be enabled by default")
+		}
+	})
+
+	t.Run("with stacktrace enabled", func(t *testing.T) {
+		handler := NewErrorHandler(WithStacktrace(true))
+		if !handler.stacktrace {
+			t.Error("expected stacktrace to be enabled")
+		}
+	})
+
+	t.Run("with stacktrace disabled", func(t *testing.T) {
+		handler := NewErrorHandler(WithStacktrace(false))
+		if handler.stacktrace {
+			t.Error("expected stacktrace to be disabled")
+		}
+	})
+}
