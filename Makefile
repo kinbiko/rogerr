@@ -27,4 +27,4 @@ lint: ./bin/golangci-lint ## Run linter (installs if needed)
 	./bin/golangci-lint run .
 
 ./bin/golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.45.2
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v2.3.0

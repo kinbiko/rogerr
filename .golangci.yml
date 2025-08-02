@@ -1,6 +1,8 @@
-# See https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml for all configuration options
+# See https://golangci-lint.run/ for all configuration options
+version: 2
 
-run.deadline: 1m
+run:
+  timeout: 1m
 
 linters-settings:
   errcheck:
@@ -19,10 +21,13 @@ linters-settings:
     threshold: 150
   depguard:
     # Packages we don't want to accidentally import
-    packages:
-      # This package has previously broken backwards compatibility in a non-major upgrade
-      # Recommend using github.com/gofrs/uuid instead
-      - github.com/satori/go.uuid
+    rules:
+      prevent-uuid:
+        deny:
+          # This package has previously broken backwards compatibility in a non-major upgrade
+          # Recommend using github.com/gofrs/uuid instead
+          - pkg: github.com/satori/go.uuid
+            desc: "use github.com/gofrs/uuid instead"
   nakedret:
     # Disallow naked returns
     max-func-lines: 0
@@ -85,19 +90,15 @@ linters-settings:
       - yodaStyleExpr
 
 linters:
-  # Run `golangci-lint linters` to see all options + a brief description of each
+  # Use specific enabled linters for reproducible builds
   enable:
     - govet
-    - gosimple
-    - golint
+    - revive
     - gosec
-    - structcheck
     - unconvert
     - ineffassign
     - dupl
-    - deadcode
     - gocyclo
-    - gofmt
     - depguard
     - misspell
     - nakedret
@@ -105,13 +106,8 @@ linters:
     - gochecknoinits
     - errcheck
     - staticcheck
-    - varcheck
-    - scopelint
     - gochecknoglobals
     - unparam
-
-  enable-all: false # Don't enable all, as the introduction of a new linter would mean a non-reproducible build.
-  disable-all: true
 
 issues:
   exclude:
@@ -128,8 +124,4 @@ issues:
         - errcheck
         - dupl
         - gosec
-        - scopelint
   exclude-use-default: false
-
-service:
-  golangci-lint-version: 1.21.x # use fixed version to not introduce new linters unexpectedly
