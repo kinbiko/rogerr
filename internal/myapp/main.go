@@ -27,22 +27,29 @@ func main() {
 		handler := rogerr.NewErrorHandler()
 		frames := handler.Stacktrace(err)
 
-		// Convert frames to structured log format
+		// Convert frames to OTEL logging data model format
 		frameData := make([]map[string]interface{}, len(frames))
 		for i, frame := range frames {
 			frameData[i] = map[string]interface{}{
-				"function": frame.Function,
-				"file":     frame.File,
-				"line":     frame.Line,
-				"in_app":   frame.InApp,
+				"code.function": frame.Function,
+				"code.filepath": frame.File,
+				"code.lineno":   frame.Line,
+				"code.namespace": func() string {
+					if frame.InApp {
+						return "application"
+					}
+					return "dependency"
+				}(),
 			}
 		}
 
-		// Log error with stacktrace as structured JSON
-		slog.Error("application error",
-			slog.String("error.message", err.Error()),
-			slog.Any("error.stacktrace", frameData),
-			slog.Int("stacktrace.frame_count", len(frames)),
+		// Log using OTEL logging data model semantic conventions
+		slog.Error("Exception occurred",
+			slog.String("exception.type", "ApplicationError"),
+			slog.String("exception.message", err.Error()),
+			slog.Any("exception.stacktrace", frameData),
+			slog.String("service.name", "demo-app"),
+			slog.String("service.version", "1.0.0"),
 		)
 	}
 }
