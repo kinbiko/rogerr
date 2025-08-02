@@ -21,8 +21,9 @@ In Go, it's conventional to attach this kind of request specific 'diagnostic' me
 
 At a high level:
 
+1. Create an ErrorHandler with `handler := rogerr.NewErrorHandler()`.
 1. Attach metadata to your context with `rogerr.WithMetadata` or `rogerr.WithMetadatum`.
-1. When you come across an error, use `err = rogerr.Wrap(ctx, err, msg)` to attach the metadata accumulated so far to the wrapped error.
+1. When you come across an error, use `err = handler.Wrap(ctx, err, msg)` to attach the metadata accumulated so far to the wrapped error.
 1. Return the error as you would normally, and at the time of logging/reporting, extract the metadata with `md := rogerr.Metadata(err)`.
 1. Record the _structured_ metadata alongside the error message.
 
