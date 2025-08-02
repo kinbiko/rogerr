@@ -7,14 +7,15 @@
 [![Go Documentation](http://img.shields.io/badge/godoc-documentation-blue.svg?style=flat)](https://pkg.go.dev/github.com/kinbiko/rogerr?tab=doc)
 [![License](https://img.shields.io/github/license/kinbiko/rogerr.svg?style=flat)](https://github.com/kinbiko/rogerr/blob/master/LICENSE)
 
-Consistent and greppable errors makes your logger and error reporting tools happy. This zero-dependency error handling support package for Go helps you achieve just that.
+Consistent and greppable errors makes your logger and error reporting tools happy.
+This zero-dependency error handling support package for Go helps you achieve just that.
 
 [Blog post explaining the problem and the solution in detail](https://kinbiko.com/posts/2022-07-30-error-messages-should-be-boring/).
 
 ## Usage
 
 When creating errors, **do not include goroutine-specific or request-specific information as part of the error message itself**.
-Error messages with these specific bits of information often break filtering/grouping algorithms, e.g. as used by error reporting tools like Sentry/Rollbar/etc. (If you use Bugsnag, I recommend [kinbiko/bugsnag](https://github.com/kinbiko/bugsnag) for an **even better** experience than this package).
+Error messages with these specific bits of information often break filtering/grouping algorithms, e.g. as used by error reporting tools like Sentry/Rollbar/etc.
 
 Instead this information should be treated as structured data, akin to structured logging solutions like Logrus and Zap.
 In Go, it's conventional to attach this kind of request specific 'diagnostic' metadata to a `context.Context` type, and that's what this package enables too.
