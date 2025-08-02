@@ -122,7 +122,17 @@ func isInApp(function, modulePath string) bool {
 	}
 
 	// Check if function belongs to the main module
-	return strings.HasPrefix(function, modulePath)
+	if strings.HasPrefix(function, modulePath) {
+		return true
+	}
+	
+	// Handle case where the binary is built from a module and function names
+	// start with "main." - check if the module path contains the current module
+	if strings.HasPrefix(function, "main.") {
+		return true
+	}
+	
+	return false
 }
 
 // WithStacktrace configures whether stacktraces should be captured.

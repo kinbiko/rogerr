@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -9,11 +8,10 @@ import (
 )
 
 func TestStacktraceIntegration(t *testing.T) {
-	ctx := context.Background()
-	err := StartApplication(ctx, "testapp", "testdata")
+	err := run([]string{"testdata"})
 	
 	if err == nil {
-		t.Fatal("expected error from StartApplication")
+		t.Fatal("expected error from run")
 	}
 	
 	// Use ErrorHandler to extract stacktrace
@@ -37,34 +35,52 @@ func TestStacktraceIntegration(t *testing.T) {
 		description     string
 	}{
 		{
-			functionPattern: "callLibraryFunction.func1",
-			filePattern:     "/internal/myapp/app.go",
+			functionPattern: "executeBusinessLogic.func1",
+			filePattern:     "/internal/myapp/pkg/service/processing.go",
 			inApp:           true,
-			description:     "anonymous function in myapp",
+			description:     "anonymous function in service package",
 		},
 		{
-			functionPattern: "callLibraryFunction",
-			filePattern:     "/internal/myapp/app.go",
+			functionPattern: "executeBusinessLogic",
+			filePattern:     "/internal/myapp/pkg/service/processing.go",
 			inApp:           true,
-			description:     "package-level function in myapp",
+			description:     "method on ProcessingService",
 		},
 		{
-			functionPattern: "processInput",
-			filePattern:     "/internal/myapp/app.go",
+			functionPattern: "ProcessData",
+			filePattern:     "/internal/myapp/pkg/service/processing.go",
 			inApp:           true,
-			description:     "method on Application struct",
+			description:     "method on ProcessingService",
 		},
 		{
-			functionPattern: "Run",
-			filePattern:     "/internal/myapp/app.go",
+			functionPattern: "processRequest.func1",
+			filePattern:     "/internal/myapp/pkg/handler/request.go",
 			inApp:           true,
-			description:     "method on Application struct",
+			description:     "anonymous function in handler package",
 		},
 		{
-			functionPattern: "StartApplication",
-			filePattern:     "/internal/myapp/app.go",
+			functionPattern: "processRequest",
+			filePattern:     "/internal/myapp/pkg/handler/request.go",
 			inApp:           true,
-			description:     "package-level function in myapp",
+			description:     "method on RequestHandler",
+		},
+		{
+			functionPattern: "HandleRequest",
+			filePattern:     "/internal/myapp/pkg/handler/request.go",
+			inApp:           true,
+			description:     "method on RequestHandler",
+		},
+		{
+			functionPattern: "Execute",
+			filePattern:     "/internal/myapp/cmd/app.go",
+			inApp:           true,
+			description:     "method on App struct",
+		},
+		{
+			functionPattern: "run",
+			filePattern:     "/internal/myapp/main.go",
+			inApp:           true,
+			description:     "main package function",
 		},
 	}
 	
@@ -100,12 +116,13 @@ func TestStacktraceIntegration(t *testing.T) {
 		t.Error("expected to find frames from mylib module")
 	}
 	
-	// Validate specific function patterns exist
+	// Validate specific function patterns exist (only for myapp frames)
 	foundFunctions := make(map[string]bool)
 	for _, frame := range frames {
-		// Skip testing framework frames for our validation
+		// Skip testing framework frames and mylib frames for our validation
 		if strings.Contains(frame.Function, "testing.") || 
-		   strings.Contains(frame.Function, "runtime.") {
+		   strings.Contains(frame.Function, "runtime.") ||
+		   strings.Contains(frame.Function, "github.com/kinbiko/rogerr/internal/mylib") {
 			continue
 		}
 		
