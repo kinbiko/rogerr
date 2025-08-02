@@ -8,7 +8,7 @@ import (
 )
 
 func ExampleWrap() {
-	someFuncWithAProblem := func(ctx context.Context) error {
+	someFuncWithAProblem := func(_ context.Context) error {
 		return fmt.Errorf("some low level err")
 	}
 
