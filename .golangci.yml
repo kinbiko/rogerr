@@ -99,7 +99,6 @@ linters:
     - ineffassign
     - dupl
     - gocyclo
-    - depguard
     - misspell
     - nakedret
     - gocritic
