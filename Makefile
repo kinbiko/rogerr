@@ -15,7 +15,8 @@ build: ## Build the package
 
 .PHONY: test
 test: ## ## Run tests with race detection and coverage
-	go test -race -coverprofile=profile.cov -covermode=atomic ./...
+	go test -race -count=1 -coverprofile=profile.cov -covermode=atomic ./...
+	cd internal/myapp && go test -count=1 ./...
 
 .PHONY: coverage
 coverage: test-race ## Generate coverage report (requires test-race)
